@@ -22,12 +22,12 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $v = ([xml](Get-Content MailTray.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
-          if (git tag -l "v$v") { throw "Le tag v$v existe déjà. Change la version dans MailTray.csproj." }
+          $v = ([xml](Get-Content src/MailTray/MailTray.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          if (git tag -l "v$v") { throw "Le tag v$v existe déjà. Change la version dans src/MailTray/MailTray.csproj." }
           "value=$v" >> $env:GITHUB_OUTPUT
 
       - name: Publish
-        run: dotnet publish MailTray.csproj -c Release -o out
+        run: dotnet publish src/MailTray/MailTray.csproj -c Release -o out
 
       - uses: actions/upload-artifact@v4
         id: unsigned
