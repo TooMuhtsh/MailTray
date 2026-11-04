@@ -30,6 +30,8 @@ internal sealed class AccountWatcher : IDisposable
     private readonly HashSet<string> _seen = new();
     private bool _firstAtom = true;
     private int _prevChat;
+    private DateTime _staleSince = DateTime.MinValue, _lastReload = DateTime.MinValue;
+    private (int?, int?) _reloadedFor;
 
     public string MailUrl => $"https://mail.google.com/mail/u/{Cfg.Index}/";
     public string SignInUrl => "https://accounts.google.com/ServiceLogin?service=mail&continue=" + Uri.EscapeDataString(MailUrl);
@@ -126,7 +128,6 @@ internal sealed class AccountWatcher : IDisposable
                 Later(4000, () =>
                 {
                     if (DateTime.Now - _lastPageNotif < TimeSpan.FromSeconds(8)) return;
-                    if (_railMail == 0) return; // déjà lu dans Gmail, le flux est en retard
                     if (fresh.Count == 1)
                         Notify?.Invoke(this, fresh[0].Author, fresh[0].Title, fresh[0].Link, false);
                     else
@@ -158,10 +159,9 @@ internal sealed class AccountWatcher : IDisposable
         bool atomFresh = DateTime.Now - _lastAtomOk < TimeSpan.FromMilliseconds(_intervalMs * 3 + 10000);
         Disconnected = !atomFresh && _railMail == null && _mailTitle == null && _mailBadge == null;
 
-        // La pastille Mail de la page fait foi : c'est ce que l'utilisateur voit dans Gmail.
-        // Le flux de Google peut garder un mail déjà lu pendant un moment.
-        MailCount = _railMail ?? (atomFresh ? _atomCount : null) ?? _mailBadge ?? _mailTitle ?? 0;
+        MailCount = atomFresh ? _atomCount ?? 0 : _railMail ?? _mailBadge ?? _mailTitle ?? 0;
         ChatCount = Cfg.CompterChat ? _railChat ?? 0 : 0;
+        CheckStalePage(atomFresh);
 
         // Chat qui monte sans notification de la page : on prévient quand même.
         if (ChatCount > _prevChat && DateTime.Now - _started > TimeSpan.FromSeconds(30) && Cfg.Notifications)
@@ -175,6 +175,26 @@ internal sealed class AccountWatcher : IDisposable
         }
         _prevChat = ChatCount;
         Changed?.Invoke(this);
+    }
+
+    /// <summary>
+    /// Gmail perd parfois sa connexion en direct : la page reste figée et ne montre plus les nouveaux mails,
+    /// alors que le flux les voit. Si l'écart dure une minute, on recharge la page, sauf si l'utilisateur s'en sert.
+    /// </summary>
+    private void CheckStalePage(bool atomFresh)
+    {
+        bool stale = atomFresh && _railMail != null && _atomCount != null && _atomCount != _railMail;
+        if (!stale) { _staleSince = DateTime.MinValue; return; }
+        if (_staleSince == DateTime.MinValue) { _staleSince = DateTime.Now; return; }
+        if (DateTime.Now - _staleSince < TimeSpan.FromSeconds(60)) return;
+        if (DateTime.Now - _lastReload < TimeSpan.FromMinutes(5)) return;
+        if (Window.Visible && Form.ActiveForm == Window) return; // ne jamais recharger sous les yeux de l'utilisateur
+        // Écart déjà présent après un rechargement : il est normal (réglage de Gmail), on n'insiste pas.
+        if (_reloadedFor == (_atomCount, _railMail)) return;
+        _reloadedFor = (_atomCount, _railMail);
+        _lastReload = DateTime.Now;
+        _staleSince = DateTime.MinValue;
+        Window.Reload();
     }
 
     private static void Later(int ms, Action a)
