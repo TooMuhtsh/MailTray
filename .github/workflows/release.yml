@@ -1,0 +1,58 @@
+name: Release
+
+# Version publiée : compilée sur un runner hébergé par GitHub, comme l'exige
+# SignPath Foundation pour signer un projet open source.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = ([xml](Get-Content MailTray.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          if (git tag -l "v$v") { throw "Le tag v$v existe déjà. Change la version dans MailTray.csproj." }
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Publish
+        run: dotnet publish MailTray.csproj -c Release -o out
+
+      - uses: actions/upload-artifact@v4
+        id: unsigned
+        with:
+          name: MailTray-unsigned
+          path: out/MailTray.exe
+
+      - name: Sign
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: MailTray
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: initial
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = "${{ steps.version.outputs.value }}"
+          $exe = if (Test-Path signed/MailTray.exe) { "signed/MailTray.exe" } else { "out/MailTray.exe" }
+          gh release create "v$v" $exe --title "MailTray $v" --generate-notes --target $env:GITHUB_SHA

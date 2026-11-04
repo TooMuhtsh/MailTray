@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MailTray : paramètres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --accent: #522583; --accent-hover: #431e6c; --accent-subtle: #f4effa; --on-accent: #ffffff;
+  --danger: #b3261e; --danger-subtle: #fdecea;
+  --text: #1b1b1f; --text-2: #6b6b73; --text-dis: #a5a5ad;
+  --page: #fafafa; --card: #ffffff; --sunken: #f1f1f4;
+  --border: #e5e5ea; --border-strong: #c9c9d1;
+  --state-hover: rgba(82, 37, 131, .08); --state-press: rgba(82, 37, 131, .14);
+  --scrim: rgba(0, 0, 0, .32);
+  --shadow: 0 6px 24px rgba(0, 0, 0, .14);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--page); color: var(--text);
+  font: 14px/20px Roboto, "Segoe UI", system-ui, sans-serif;
+  display: grid; grid-template-columns: 260px 1fr; overflow: hidden;
+}
+h1, h2 { font-family: Poppins, "Segoe UI", sans-serif; margin: 0; }
+h1 { font-size: 24px; line-height: 30px; font-weight: 700; }
+h2 { font-size: 18px; line-height: 24px; font-weight: 600; }
+button { font: inherit; color: inherit; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Navigation */
+nav { background: var(--card); border-right: 1px solid var(--border); padding: 20px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 12px 20px; font-family: Poppins, sans-serif; font-weight: 700; font-size: 18px; }
+.brand svg { width: 28px; height: 28px; }
+.nav-label { font: 500 12px/16px Roboto, sans-serif; color: var(--text-2); padding: 16px 12px 6px; text-transform: none; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 0 12px; height: 44px; border: 0; border-radius: 999px;
+  background: transparent; text-align: left; cursor: pointer; font-weight: 500; position: relative;
+}
+.nav-item:hover { background: var(--state-hover); }
+.nav-item:active { background: var(--state-press); }
+.nav-item[aria-current="true"] { background: var(--accent-subtle); color: var(--accent); }
+.nav-item svg { width: 20px; height: 20px; flex: none; }
+.nav-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-item.off .name { color: var(--text-dis); }
+.nav-add { color: var(--accent); }
+.nav-badges { display: flex; gap: 4px; flex: none; }
+.nav-badge { display: inline-flex; align-items: center; gap: 3px; height: 20px; min-width: 20px; padding: 0 7px; border-radius: 999px; font: 500 12px/16px Roboto, sans-serif; }
+.nav-badge svg { width: 12px; height: 12px; }
+.nav-badge.mail { background: var(--accent); color: var(--on-accent); }
+.nav-badge.chat { background: #1e7a46; color: #fff; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Contenu */
+main { overflow-y: auto; padding: 32px 40px 120px; }
+.page { max-width: 720px; display: none; }
+.page.active { display: block; }
+.page-head { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; min-height: 40px; }
+.page-head h1 { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 20px; overflow: hidden; }
+.card-title { padding: 20px 24px 4px; }
+.row { display: flex; align-items: center; gap: 16px; padding: 14px 24px; min-height: 64px; }
+.row + .row { border-top: 1px solid var(--border); }
+.row .text { flex: 1; min-width: 0; }
+.row .label { font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.row .hint { color: var(--text-2); font-size: 13px; line-height: 18px; }
+
+/* Info (!) */
+.info { position: relative; display: inline-flex; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--text-2); color: var(--text-2); font: 700 11px/15px Roboto, sans-serif; justify-content: center; cursor: help; }
+.info .tip { display: none; position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 280px; background: var(--text); color: var(--card); font: 400 13px/18px Roboto, sans-serif; padding: 8px 12px; border-radius: 8px; z-index: 5; box-shadow: var(--shadow); }
+.info:hover .tip, .info:focus .tip { display: block; }
+
+/* Interrupteur MD3 */
+.switch { position: relative; width: 52px; height: 32px; flex: none; border-radius: 999px; border: 2px solid var(--border-strong); background: var(--sunken); cursor: pointer; padding: 0; transition: background .15s, border-color .15s; }
+.switch::after { content: ""; position: absolute; top: 50%; left: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-2); transform: translateY(-50%); transition: all .15s; }
+.switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked="true"]::after { left: 22px; width: 24px; height: 24px; background: var(--on-accent); }
+.switch:hover::before { content: ""; position: absolute; inset: -6px; border-radius: 999px; background: var(--state-hover); }
+
+/* Choix segmenté */
+.segmented { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 999px; overflow: hidden; flex: none; }
+.segmented button { border: 0; background: transparent; padding: 0 16px; height: 40px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.segmented button + button { border-left: 1px solid var(--border-strong); }
+.segmented button:hover { background: var(--state-hover); }
+.segmented button[aria-pressed="true"] { background: var(--accent-subtle); color: var(--accent); }
+.segmented button[aria-pressed="true"]::before { content: "✓"; }
+
+/* Champ */
+.field { position: relative; width: 100%; }
+.field input { width: 100%; height: 56px; border: 1px solid var(--border-strong); border-radius: 12px; background: transparent; padding: 22px 16px 6px; font: 16px Roboto, sans-serif; color: var(--text); }
+.field input:focus { outline: none; border: 2px solid var(--accent); padding: 21px 15px 5px; }
+.field label { position: absolute; left: 16px; top: 8px; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.field input:focus + label { color: var(--accent); }
+
+/* Pas à pas */
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--border-strong); border-radius: 999px; flex: none; }
+.stepper button { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 999px; cursor: pointer; font-size: 18px; }
+.stepper button:hover { background: var(--state-hover); }
+.stepper output { min-width: 64px; text-align: center; font-weight: 500; }
+
+/* Boutons */
+.btn { height: 40px; padding: 0 20px; border-radius: 999px; border: 0; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; position: relative; overflow: hidden; }
+.btn::after { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity .1s; }
+.btn:hover::after { opacity: .08; }
+.btn:active::after { opacity: .14; }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
+.btn:disabled { opacity: .38; cursor: default; }
+.btn:disabled::after { display: none; }
+.btn-tonal { background: var(--accent-subtle); color: var(--accent); }
+.btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--border-strong); }
+.btn-text { background: transparent; color: var(--accent); padding: 0 12px; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger-outline { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--text-2); }
+.icon-btn:hover { background: var(--state-hover); }
+.icon-btn:disabled { opacity: .35; cursor: default; background: transparent; }
+.icon-btn svg { width: 22px; height: 22px; }
+
+/* Puce */
+.chip { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 8px; font: 500 12px/16px Roboto, sans-serif; background: var(--sunken); color: var(--text-2); flex: none; }
+.chip.accent { background: var(--accent-subtle); color: var(--accent); }
+.chip.ok { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.chip.warn { background: #fbeee2; color: #a7521d; border: 1px solid #a7521d; }
+
+/* Barre d'enregistrement */
+.savebar {
+  position: fixed; left: calc(260px + 40px); right: 40px; bottom: 24px; max-width: 720px;
+  background: var(--text); color: var(--card); border-radius: 16px; padding: 10px 12px 10px 24px;
+  display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow);
+  transform: translateY(160%); visibility: hidden; transition: transform .2s, visibility .2s;
+}
+.savebar.show { transform: none; visibility: visible; }
+.savebar span { flex: 1; }
+.savebar .btn-text { color: var(--card); }
+.savebar .btn-primary { background: var(--accent-subtle); color: var(--accent); }
+
+/* Fenêtre de dialogue */
+.scrim { position: fixed; inset: 0; background: var(--scrim); display: none; align-items: center; justify-content: center; z-index: 20; animation: fade .15s; }
+.scrim.show { display: flex; }
+@keyframes fade { from { opacity: 0; } }
+.dialog { background: var(--card); border-radius: 28px; padding: 24px; width: 420px; max-width: calc(100vw - 32px); box-shadow: var(--shadow); }
+.dialog .icon { display: flex; justify-content: center; color: var(--danger); margin-bottom: 16px; }
+.dialog .icon svg { width: 28px; height: 28px; }
+.dialog h2 { text-align: center; margin-bottom: 16px; }
+.dialog p { margin: 0 0 16px; color: var(--text-2); }
+.check { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px 0; }
+.check .box { width: 18px; height: 18px; border-radius: 2px; border: 2px solid var(--text-2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.check[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+.check[aria-checked="true"] .box::after { content: "✓"; color: var(--on-accent); font-size: 13px; font-weight: 700; }
+.dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+/* À propos */
+.about p { margin: 0 0 12px; }
+.about h2 { margin: 24px 0 8px; font-size: 16px; }
+.about code { font: 13px "Roboto Mono", Consolas, monospace; background: var(--sunken); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+.empty { padding: 24px; color: var(--text-2); }
+</style>
+</head>
+<body>
+<nav id="nav" aria-label="Sections"></nav>
+<main id="main"></main>
+
+<div class="savebar" id="savebar" role="status">
+  <span>Modifications non enregistrées</span>
+  <button class="btn btn-text" id="discard">Annuler</button>
+  <button class="btn btn-primary" id="save">Enregistrer</button>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <div class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+    <h2 id="dlg-title"></h2>
+    <p id="dlg-text"></p>
+    <div class="check" id="dlg-check" role="checkbox" aria-checked="true" tabindex="0"><span class="box"></span><span>Effacer aussi sa session Google de ce PC</span></div>
+    <div class="actions">
+      <button class="btn btn-text" id="dlg-cancel">Annuler</button>
+      <button class="btn btn-danger" id="dlg-ok">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICON = {
+  general: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.63-.94l-.36-2.54A.48.48 0 0 0 13.92 2h-3.84a.48.48 0 0 0-.48.41l-.36 2.54a7.4 7.4 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.59.22L2.71 8.47a.49.49 0 0 0 .12.61l2.03 1.58a7.4 7.4 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.05.24.25.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7 7 0 0 0 1.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>',
+  account: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+  add: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
+  about: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m7.41 15.41 4.59-4.58 4.59 4.58L18 14l-6-6-6 6z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>',
+  mailSmall: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+  chatSmall: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>',
+  brand: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="#522583" stroke-width="2"/><path d="m3 6 9 7 9-7" fill="none" stroke="#522583" stroke-width="2"/></svg>'
+};
+
+let init = null;          // données reçues de l'app
+let state = null;         // copie modifiable
+let toDelete = [];        // sessions à effacer à l'enregistrement
+let current = 'general';  // section affichée
+let pendingDelete = null;
+let etats = [];           // état des comptes en cours (connecté, compteurs)
+const accId = (a) => a.profil === '' ? 'principal' : a.profil;
+
+const host = window.chrome && window.chrome.webview;
+const send = (m) => { if (host) host.postMessage(m); };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const newProfile = () => 'compte-' + Math.random().toString(16).slice(2, 10);
+
+function dirty() {
+  return JSON.stringify({ c: state.config, s: state.startup }) !== JSON.stringify({ c: init.config, s: init.startup }) || toDelete.length > 0;
+}
+function refreshSavebar() { document.getElementById('savebar').classList.toggle('show', dirty()); }
+
+// Petits compteurs à droite de chaque compte : mails et Chat, masqués à zéro.
+function navBadges(a) {
+  const e = etats.find((x) => x.id === (a.profil === '' ? 'principal' : a.profil));
+  if (!e || !e.connecte) return '';
+  const fmt = (n) => n > 99 ? '99+' : n;
+  let h = '';
+  if (e.mails > 0) h += `<span class="nav-badge mail" title="${e.mails} mail(s) non lu(s)">${ICON.mailSmall}${fmt(e.mails)}</span>`;
+  if (e.chat > 0) h += `<span class="nav-badge chat" title="${e.chat} message(s) Chat non lu(s)">${ICON.chatSmall}${fmt(e.chat)}</span>`;
+  return h ? `<span class="nav-badges">${h}</span>` : '';
+}
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  const acc = state.config.comptes.map((c, i) =>
+    `<button class="nav-item ${c.actif ? '' : 'off'}" data-go="acc-${i}" aria-current="${current === 'acc-' + i}">${ICON.account}<span class="name">${esc(c.nom || 'Sans nom')}</span>${navBadges(c)}</button>`).join('');
+  nav.innerHTML = `
+    <div class="brand">${ICON.brand}MailTray</div>
+    <button class="nav-item" data-go="general" aria-current="${current === 'general'}">${ICON.general}<span class="name">Général</span></button>
+    <div class="nav-label">Comptes</div>
+    ${acc}
+    <button class="nav-item nav-add" data-go="add">${ICON.add}<span class="name">Ajouter un compte</span></button>
+    <div class="nav-label"></div>
+    <button class="nav-item" data-go="about" aria-current="${current === 'about'}">${ICON.about}<span class="name">À propos</span></button>`;
+  nav.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => {
+    if (b.dataset.go === 'add') return addAccount();
+    current = b.dataset.go; render();
+  });
+}
+
+function sw(id, on) { return `<button class="switch" role="switch" id="${id}" aria-checked="${on}"></button>`; }
+function info(t) { return `<span class="info" tabindex="0">!<span class="tip">${esc(t)}</span></span>`; }
+
+function renderGeneral() {
+  const c = state.config;
+  return `<section class="page active">
+    <div class="page-head"><h1>Général</h1></div>
+    <div class="card">
+      <div class="row"><div class="text"><div class="label">Icône dans la zone de notification</div></div>
+        <div class="segmented" id="mode">
+          <button data-v="unique" aria-pressed="${c.modeIcone !== 'parCompte'}">Une seule icône</button>
+          <button data-v="parCompte" aria-pressed="${c.modeIcone === 'parCompte'}">Une par compte</button>
+        </div></div>
+      <div class="row"><div class="text"><div class="label">Relève de secours des mails ${info('Les compteurs suivent Gmail en 1 à 2 secondes. Cette relève sert de filet si la page Gmail ne répond plus.')}</div></div>
+        <div class="stepper"><button id="int-minus" aria-label="Moins">−</button><output id="int">${c.intervalleSecondes} s</output><button id="int-plus" aria-label="Plus">+</button></div></div>
+      <div class="row"><div class="text"><div class="label">Lancer avec Windows</div></div>${sw('startup', state.startup)}</div>
+    </div>
+  </section>`;
+}
+
+function renderAccount(i) {
+  const a = state.config.comptes[i];
+  const n = state.config.comptes.length;
+  return `<section class="page active">
+    <div class="page-head">
+      <h1>${esc(a.nom || 'Sans nom')}</h1>
+      <span id="acc-state">${stateChip(a)}</span>
+      <button class="icon-btn" id="up" title="Monter" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button>
+      <button class="icon-btn" id="down" title="Descendre" ${i === n - 1 ? 'disabled' : ''}>${ICON.down}</button>
+    </div>
+    <div class="card"><div class="row">
+      <div class="text"><div class="label">Fenêtre du compte</div></div>
+      <span id="acc-open">${openBtn(a)}</span>
+    </div></div>
+    <div class="card"><div class="row">
+      <div class="field"><input id="nom" value="${esc(a.nom)}" maxlength="40" autocomplete="off"><label for="nom">Nom affiché</label></div>
+    </div></div>
+    <div class="card">
+      <div class="row"><div class="text"><div class="label">Compte actif</div></div>${sw('actif', a.actif)}</div>
+      <div class="row"><div class="text"><div class="label">Compté dans l'icône unique</div></div>${sw('dansBadge', a.dansBadge)}</div>
+      <div class="row"><div class="text"><div class="label">Compter les messages Chat</div></div>${sw('compterChat', a.compterChat)}</div>
+      <div class="row"><div class="text"><div class="label">Notifications</div></div>${sw('notifications', a.notifications)}</div>
+    </div>
+    <div class="card"><div class="row">
+      <div class="text"><div class="label">Supprimer ce compte</div></div>
+      <button class="btn btn-danger-outline" id="del" ${n === 1 ? 'disabled title="Il faut au moins un compte"' : ''}>Supprimer</button>
+    </div></div>
+  </section>`;
+}
+
+function etatOf(a) { return etats.find((e) => e.id === accId(a)); }
+function stateChip(a) {
+  const e = etatOf(a);
+  if (!e) return '<span class="chip">Pas encore lancé</span>';
+  if (!e.connecte) return '<span class="chip warn">Non connecté</span>';
+  const p = (n, s) => n + ' ' + s + (n > 1 ? 's' : '');
+  return `<span class="chip ok">${p(e.mails, 'mail')}, ${e.chat} Chat</span>`;
+}
+function openBtn(a) {
+  const e = etatOf(a);
+  if (!e) return `<button class="btn btn-outline" disabled title="Enregistre d'abord, et active le compte">Ouvrir</button>`;
+  return e.connecte
+    ? `<button class="btn btn-tonal" data-open="${esc(accId(a))}">Ouvrir</button>`
+    : `<button class="btn btn-primary" data-open="${esc(accId(a))}">Se connecter</button>`;
+}
+function refreshStates() {
+  if (!current.startsWith('acc-')) return;
+  const a = state.config.comptes[+current.slice(4)];
+  if (!a) return;
+  document.getElementById('acc-state').innerHTML = stateChip(a);
+  document.getElementById('acc-open').innerHTML = openBtn(a);
+  bindOpen();
+}
+function bindOpen() {
+  document.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => send({ type: 'open', id: b.dataset.open }));
+}
+
+function renderAbout() {
+  const d = init.dataFolder;
+  return `<section class="page active about">
+    <div class="page-head"><h1>À propos</h1><span class="chip accent">Version ${esc(init.version)}</span></div>
+    <div class="card"><div style="padding:20px 24px">
+      <p>Gmail et Google Chat dans une fenêtre dédiée, avec le nombre de mails et de messages Chat non lus sur l'icône de la zone de notification et de la barre des tâches.</p>
+      <h2>Licence</h2>
+      <p>Licence MIT. Le logiciel est fourni « tel quel », sans garantie d'aucune sorte, expresse ou implicite. L'auteur ne peut être tenu responsable d'aucun dommage lié à son utilisation.</p>
+      <h2>Marques</h2>
+      <p>Gmail et Google Chat sont des marques de Google LLC. MailTray est un projet indépendant, ni affilié à Google, ni approuvé par Google.</p>
+      <h2>Confidentialité</h2>
+      <p>MailTray ne collecte aucune donnée et n'envoie rien à son auteur ni à un tiers. L'app communique uniquement avec les serveurs de Google, comme un navigateur.</p>
+      <p>Sessions et réglages restent sur ce PC : <code>${esc(d)}</code></p>
+      <h2>Modifications du système</h2>
+      <p>Lancement avec Windows : une entrée « MailTray » dans <code>HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run</code>, désactivable dans Général. Aucun service, aucun droit administrateur.</p>
+      <h2>Désinstallation</h2>
+      <p>Désactiver « Lancer avec Windows », quitter l'app, supprimer MailTray.exe, puis supprimer le dossier des données.</p>
+      <button class="btn btn-tonal" id="open-data">Ouvrir le dossier des données</button>
+    </div></div>
+  </section>`;
+}
+
+function render() {
+  if (current.startsWith('acc-') && !state.config.comptes[+current.slice(4)]) current = 'general';
+  renderNav();
+  const main = document.getElementById('main');
+  if (current === 'general') main.innerHTML = renderGeneral();
+  else if (current === 'about') main.innerHTML = renderAbout();
+  else main.innerHTML = renderAccount(+current.slice(4));
+  bind();
+  refreshSavebar();
+}
+
+function bind() {
+  const c = state.config;
+  const toggle = (id, set) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = () => { const v = el.getAttribute('aria-checked') !== 'true'; el.setAttribute('aria-checked', v); set(v); renderNav(); refreshSavebar(); };
+  };
+  if (current === 'general') {
+    document.querySelectorAll('#mode button').forEach((b) => b.onclick = () => { c.modeIcone = b.dataset.v; render(); });
+    const step = (d) => { c.intervalleSecondes = Math.min(300, Math.max(5, c.intervalleSecondes + d)); document.getElementById('int').textContent = c.intervalleSecondes + ' s'; refreshSavebar(); };
+    document.getElementById('int-minus').onclick = () => step(-5);
+    document.getElementById('int-plus').onclick = () => step(5);
+    toggle('startup', (v) => state.startup = v);
+  } else if (current.startsWith('acc-')) {
+    const i = +current.slice(4), a = c.comptes[i];
+    const nom = document.getElementById('nom');
+    nom.oninput = () => { a.nom = nom.value; document.querySelector('.page-head h1').textContent = nom.value || 'Sans nom'; renderNav(); refreshSavebar(); };
+    for (const k of ['actif', 'dansBadge', 'compterChat', 'notifications']) toggle(k, (v) => a[k] = v);
+    const move = (d) => { const j = i + d; [c.comptes[i], c.comptes[j]] = [c.comptes[j], c.comptes[i]]; current = 'acc-' + j; render(); };
+    document.getElementById('up').onclick = () => move(-1);
+    document.getElementById('down').onclick = () => move(1);
+    document.getElementById('del').onclick = () => askDelete(i);
+    bindOpen();
+  } else if (current === 'about') {
+    document.getElementById('open-data').onclick = () => send({ type: 'openData' });
+  }
+}
+
+function addAccount() {
+  const c = state.config;
+  c.comptes.push({ nom: 'Compte ' + (c.comptes.length + 1), index: 0, profil: c.comptes.length === 0 ? '' : newProfile(), actif: true, dansBadge: true, compterChat: true, notifications: true });
+  current = 'acc-' + (c.comptes.length - 1);
+  render();
+  const nom = document.getElementById('nom');
+  nom.focus(); nom.select();
+}
+
+// Confirmation de suppression
+function askDelete(i) {
+  const a = state.config.comptes[i];
+  pendingDelete = i;
+  document.getElementById('dlg-title').textContent = `Supprimer « ${a.nom || 'Sans nom'} » ?`;
+  document.getElementById('dlg-text').textContent = 'Le compte disparaît de MailTray. Ton compte Google n\'est pas touché.';
+  const chk = document.getElementById('dlg-check');
+  chk.setAttribute('aria-checked', 'true');
+  chk.style.display = a.profil === '' ? 'none' : '';
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('dlg-cancel').focus();
+}
+function closeDialog() { document.getElementById('scrim').classList.remove('show'); pendingDelete = null; }
+document.getElementById('dlg-cancel').onclick = closeDialog;
+document.getElementById('scrim').onclick = (e) => { if (e.target.id === 'scrim') closeDialog(); };
+const chk = document.getElementById('dlg-check');
+const flip = () => chk.setAttribute('aria-checked', chk.getAttribute('aria-checked') !== 'true');
+chk.onclick = flip;
+chk.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
+document.getElementById('dlg-ok').onclick = () => {
+  const i = pendingDelete;
+  const a = state.config.comptes[i];
+  if (a.profil !== '' && chk.getAttribute('aria-checked') === 'true') toDelete.push(a.profil);
+  state.config.comptes.splice(i, 1);
+  closeDialog();
+  current = state.config.comptes.length ? 'acc-' + Math.max(0, i - 1) : 'general';
+  render();
+};
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('scrim').classList.contains('show')) closeDialog();
+  if (e.key === 's' && e.ctrlKey && dirty()) { e.preventDefault(); save(); }
+});
+
+// Enregistrer / annuler
+function save() {
+  const c = state.config;
+  c.comptes.forEach((a) => a.nom = (a.nom || '').trim() || 'Sans nom');
+  send({ type: 'save', config: c, startup: state.startup, deleteProfiles: toDelete });
+}
+document.getElementById('save').onclick = save;
+document.getElementById('discard').onclick = () => { state = clone(init); toDelete = []; render(); };
+
+// Messages de l'app
+function onHost(m) {
+  if (m.etats) etats = m.etats;
+  if (m.type === 'etat') { if (state) { renderNav(); refreshStates(); } return; }
+  if (m.type === 'init') {
+    init = m;
+    state = clone(m);
+    toDelete = [];
+    if (m.section) current = m.section;
+    render();
+  }
+}
+if (host) host.addEventListener('message', (e) => onHost(e.data));
+send({ type: 'ready' });
+
+// Aperçu hors de l'app
+if (!host) onHost({ type: 'init', version: 'aperçu', etats: [{ id: 'principal', connecte: true, mails: 3, chat: 1 }, { id: 'compte-1a2b3c4d', connecte: false, mails: 0, chat: 0 }], dataFolder: 'C:\\Users\\...\\AppData\\Roaming\\MailTray', startup: true,
+  config: { modeIcone: 'unique', intervalleSecondes: 10, comptes: [
+    { nom: 'Learneo', index: 0, profil: '', actif: true, dansBadge: true, compterChat: true, notifications: true },
+    { nom: 'Perso', index: 0, profil: 'compte-1a2b3c4d', actif: true, dansBadge: false, compterChat: false, notifications: true }] } });
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Les pull requests passent toujours sur un runner GitHub : le runner du PVE
+    # n'exécute jamais le code d'une contribution extérieure.
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-latest' || (vars.RUNNER_LINUX || 'ubuntu-latest') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Publish
+        run: dotnet publish MailTray.csproj -c Release -o out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MailTray-build
+          path: out/MailTray.exe
+          retention-days: 7
