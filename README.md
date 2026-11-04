@@ -1,5 +1,7 @@
 # MailTray
 
+![Icônes de MailTray](docs/icones.png)
+
 Gmail et Google Chat dans une fenêtre dédiée sous Windows, avec le nombre de mails et de messages Chat non lus sur l'icône de la zone de notification et sur celle de la barre des tâches. L'app reste dans le tray quand on ferme la fenêtre, et le compteur se met à jour en une à deux secondes.
 
 [à écrire toi-même]
@@ -29,7 +31,7 @@ Déposer la nouvelle version à côté de l'exe sous le nom `MailTray.update.exe
 ## Compiler
 
 ```
-dotnet publish MailTray.csproj -c Release -o out
+dotnet publish src/MailTray/MailTray.csproj -c Release -o out
 ```
 
 La compilation fonctionne aussi sous Linux.
@@ -64,6 +66,14 @@ Only release builds produced by the `Release` workflow of this repository, on Gi
 ## Marques
 
 Gmail et Google Chat sont des marques de Google LLC. MailTray est un projet indépendant, ni affilié à Google, ni approuvé par Google.
+
+## Structure du dépôt
+
+- `src/MailTray` contient l'app, avec l'entrée et le tray à la racine.
+- `Accounts` gère la fenêtre de chaque compte et la lecture des compteurs.
+- `Settings` contient la fenêtre et la page des paramètres.
+- `Shell` regroupe l'intégration Windows (icône du tray, barre des tâches, Jump List).
+- `Resources` contient les icônes.
 
 ## Licence
 

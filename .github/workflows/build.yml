@@ -24,7 +24,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Publish
-        run: dotnet publish MailTray.csproj -c Release -o out
+        run: dotnet publish src/MailTray/MailTray.csproj -c Release -o out
       - uses: actions/upload-artifact@v4
         with:
           name: MailTray-build
