@@ -126,6 +126,7 @@ internal sealed class AccountWatcher : IDisposable
                 Later(4000, () =>
                 {
                     if (DateTime.Now - _lastPageNotif < TimeSpan.FromSeconds(8)) return;
+                    if (_railMail == 0) return; // déjà lu dans Gmail, le flux est en retard
                     if (fresh.Count == 1)
                         Notify?.Invoke(this, fresh[0].Author, fresh[0].Title, fresh[0].Link, false);
                     else
@@ -157,7 +158,9 @@ internal sealed class AccountWatcher : IDisposable
         bool atomFresh = DateTime.Now - _lastAtomOk < TimeSpan.FromMilliseconds(_intervalMs * 3 + 10000);
         Disconnected = !atomFresh && _railMail == null && _mailTitle == null && _mailBadge == null;
 
-        MailCount = atomFresh ? _atomCount ?? 0 : _railMail ?? _mailBadge ?? _mailTitle ?? 0;
+        // La pastille Mail de la page fait foi : c'est ce que l'utilisateur voit dans Gmail.
+        // Le flux de Google peut garder un mail déjà lu pendant un moment.
+        MailCount = _railMail ?? (atomFresh ? _atomCount : null) ?? _mailBadge ?? _mailTitle ?? 0;
         ChatCount = Cfg.CompterChat ? _railChat ?? 0 : 0;
 
         // Chat qui monte sans notification de la page : on prévient quand même.
