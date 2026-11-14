@@ -36,21 +36,6 @@ dotnet publish src/MailTray/MailTray.csproj -c Release -o out
 
 La compilation fonctionne aussi sous Linux.
 
-## Dépannage
-
-### Fenêtre Gmail grise ou paramètres qui ne s'ouvrent pas
-
-MailTray affiche Gmail avec WebView2, le moteur web de Windows. Si Windows applique un réglage de compatibilité « haute résolution » au fichier `msedgewebview2.exe`, WebView2 ne peut plus créer ses fenêtres et MailTray reste gris (erreur `0x8007139F`).
-
-Pour le retirer :
-
-1. Quitter MailTray.
-2. Ouvrir l'éditeur du registre et aller dans `HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers`.
-3. Supprimer la valeur dont le nom se termine par `msedgewebview2.exe` (sa donnée contient `HIGHDPIAWARE`). Si elle se trouve sous `HKEY_LOCAL_MACHINE`, il faut les droits administrateur.
-4. Relancer MailTray.
-
-On peut aussi passer par les propriétés de `msedgewebview2.exe` (dans `C:\Program Files (x86)\Microsoft\EdgeWebView\Application\<version>`), onglet Compatibilité, bouton « Modifier les paramètres PPP élevés », et décocher « Remplacer le comportement de mise à l'échelle haute résolution ».
-
 ## Confidentialité
 
 MailTray ne collecte aucune donnée et n'envoie rien à son auteur ni à un tiers. L'app communique uniquement avec les serveurs de Google, comme un navigateur. Les sessions et les réglages restent sur le PC, dans `%APPDATA%\MailTray`.

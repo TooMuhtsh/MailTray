@@ -11,7 +11,7 @@
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     <AssemblyName>MailTray</AssemblyName>
     <RootNamespace>MailTray</RootNamespace>
-    <Version>0.10.4</Version>
+    <Version>0.10.5</Version>
     <Product>MailTray</Product>
     <Company>Alex Ramirez</Company>
     <Copyright>Copyright (c) 2026 Alex Ramirez</Copyright>

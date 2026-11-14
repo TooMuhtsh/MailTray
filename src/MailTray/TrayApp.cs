@@ -168,18 +168,6 @@ internal sealed class TrayApp : ApplicationContext
         UpdateJumpList();
 
         Exception? failure = await InitWatchersAsync(_watchers);
-        if (failure != null)
-        {
-            // Souvent passager : le moteur d'une instance qui se ferme tient encore le dossier des données.
-            // On attend qu'il disparaisse, puis on recrée l'environnement et on réessaie une fois.
-            await Task.Delay(5000);
-            try
-            {
-                _env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"), EnvOptions());
-                failure = await InitWatchersAsync(_watchers.Where(w => !w.Window.Ready).ToList());
-            }
-            catch (Exception ex) { failure = ex; }
-        }
         if (failure != null) WebViewCheck.Explain(failure);
 
         if (_firstBuild && _watchers.Count > 0 && !Environment.GetCommandLineArgs().Contains("--tray"))
