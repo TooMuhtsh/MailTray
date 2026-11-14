@@ -175,7 +175,7 @@ internal sealed class TrayApp : ApplicationContext
             }
             catch (Exception ex) { failure = ex; }
         }
-        if (failure != null && WebViewCheck.Explain(failure)) { Restart(); return; }
+        if (failure != null) WebViewCheck.Explain(failure);
 
         if (_firstBuild && _watchers.Count > 0 && !Environment.GetCommandLineArgs().Contains("--tray"))
             _watchers[0].Window.ShowAndActivate();
@@ -391,7 +391,7 @@ internal sealed class TrayApp : ApplicationContext
     private void OpenSettings(string section = "general")
     {
         if (_settings is { IsDisposed: false }) { _settings.ShowSection(section); return; }
-        _settings = new SettingsWindow(_cfg, section, AccountStates, OpenAccount, Restart);
+        _settings = new SettingsWindow(_cfg, section, AccountStates, OpenAccount);
         _settings.Saved += (newCfg, deleteProfiles) =>
         {
             // Sessions des comptes supprimés : effacées de ce PC si demandé.
@@ -431,14 +431,6 @@ internal sealed class TrayApp : ApplicationContext
     {
         Teardown();
         _ = BuildAsync();
-    }
-
-    /// <summary>Relance MailTray (après avoir retiré un réglage qui bloquait WebView2).</summary>
-    public void Restart()
-    {
-        Program.ReleaseInstance();
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ExePath) { UseShellExecute = false });
-        ExitApp();
     }
 
     private void ExitApp()
