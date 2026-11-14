@@ -140,13 +140,7 @@ internal sealed class TrayApp : ApplicationContext
     {
         try
         {
-            _env ??= await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"),
-                new CoreWebView2EnvironmentOptions
-                {
-                    // Les fenêtres tournent cachées : on évite que le navigateur les mette en veille.
-                    AdditionalBrowserArguments =
-                        "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
-                });
+            _env ??= await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"), EnvOptions());
         }
         catch (Exception ex)
         {
@@ -168,10 +162,18 @@ internal sealed class TrayApp : ApplicationContext
         BuildIcons();
         UpdateJumpList();
 
-        Exception? failure = null;
-        foreach (var w in _watchers)
+        Exception? failure = await InitWatchersAsync(_watchers);
+        if (failure != null)
         {
-            try { await w.InitAsync(_env); } catch (Exception ex) { failure ??= ex; }
+            // Souvent passager : le moteur d'une instance qui se ferme tient encore le dossier des données.
+            // On attend qu'il disparaisse, puis on recrée l'environnement et on réessaie une fois.
+            await Task.Delay(5000);
+            try
+            {
+                _env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"), EnvOptions());
+                failure = await InitWatchersAsync(_watchers.Where(w => !w.Window.Ready).ToList());
+            }
+            catch (Exception ex) { failure = ex; }
         }
         if (failure != null && WebViewCheck.Explain(failure)) { Restart(); return; }
 
@@ -186,6 +188,24 @@ internal sealed class TrayApp : ApplicationContext
         first.Tick += (_, _) => { first.Stop(); first.Dispose(); foreach (var w in _watchers) w.Poll(); };
         first.Start();
         RefreshIcons();
+    }
+
+    private static CoreWebView2EnvironmentOptions EnvOptions() => new()
+    {
+        // Les fenêtres tournent cachées : on évite que le navigateur les mette en veille.
+        AdditionalBrowserArguments =
+            "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
+    };
+
+    /// <summary>Prépare les fenêtres Gmail. Renvoie le premier échec, ou null.</summary>
+    private async Task<Exception?> InitWatchersAsync(List<AccountWatcher> watchers)
+    {
+        Exception? failure = null;
+        foreach (var w in watchers)
+        {
+            try { await w.InitAsync(_env!); } catch (Exception ex) { failure ??= ex; }
+        }
+        return failure;
     }
 
     private void BuildIcons()
