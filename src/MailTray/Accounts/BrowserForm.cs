@@ -152,6 +152,11 @@ internal sealed class BrowserForm : Form
         if (Ready) _web.CoreWebView2.Navigate(url);
     }
 
+    public void Reload()
+    {
+        if (Ready) _web.CoreWebView2.Reload();
+    }
+
     public void Run(string script)
     {
         if (Ready) _ = _web.CoreWebView2.ExecuteScriptAsync(script);
