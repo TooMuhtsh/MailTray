@@ -108,6 +108,8 @@ internal sealed class TrayApp : ApplicationContext
     private void ApplyUpdate()
     {
         if (!File.Exists(UpdatePath)) return;
+        // Version extraite d'un zip téléchargé : sans ça, Windows demande confirmation à chaque lancement.
+        DeleteFile(UpdatePath + ":Zone.Identifier");
         try
         {
             if (File.Exists(OldPath)) File.Delete(OldPath);
@@ -124,6 +126,9 @@ internal sealed class TrayApp : ApplicationContext
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ExePath, "--apres-maj") { UseShellExecute = false });
         ExitApp();
     }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern bool DeleteFile(string path);
 
     /// <summary>Supprime l'ancienne version laissée par une mise à jour.</summary>
     private static void CleanOldVersion()
