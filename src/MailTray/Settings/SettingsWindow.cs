@@ -21,13 +21,15 @@ internal sealed class SettingsWindow : Form
     private string _section;
     private readonly Func<object> _states;
     private readonly Action<string> _openAccount;
+    private readonly Action _restart;
     private readonly System.Windows.Forms.Timer _statesTimer = new() { Interval = 2000 };
 
-    public SettingsWindow(Config cfg, string section, Func<object> states, Action<string> openAccount)
+    public SettingsWindow(Config cfg, string section, Func<object> states, Action<string> openAccount, Action restart)
     {
         _cfg = cfg;
         _states = states;
         _openAccount = openAccount;
+        _restart = restart;
         _statesTimer.Tick += (_, _) => SendStates();
         FormClosed += (_, _) => _statesTimer.Dispose();
         _section = section;
@@ -58,8 +60,8 @@ internal sealed class SettingsWindow : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Impossible d'ouvrir les paramètres.\n\n" + ex.Message, Text);
             Close();
+            if (WebViewCheck.Explain(ex)) _restart();
             return;
         }
         var core = _web.CoreWebView2;
