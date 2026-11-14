@@ -3,13 +3,15 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Même mise à l'échelle que le moteur WebView2, y compris sur des écrans à échelles différentes. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     <AssemblyName>MailTray</AssemblyName>
     <RootNamespace>MailTray</RootNamespace>
-    <Version>0.10.2</Version>
+    <Version>0.10.5</Version>
     <Product>MailTray</Product>
     <Company>Alex Ramirez</Company>
     <Copyright>Copyright (c) 2026 Alex Ramirez</Copyright>

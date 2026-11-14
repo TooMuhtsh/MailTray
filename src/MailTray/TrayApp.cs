@@ -108,6 +108,8 @@ internal sealed class TrayApp : ApplicationContext
     private void ApplyUpdate()
     {
         if (!File.Exists(UpdatePath)) return;
+        // Version extraite d'un zip téléchargé : sans ça, Windows demande confirmation à chaque lancement.
+        DeleteFile(UpdatePath + ":Zone.Identifier");
         try
         {
             if (File.Exists(OldPath)) File.Delete(OldPath);
@@ -125,6 +127,9 @@ internal sealed class TrayApp : ApplicationContext
         ExitApp();
     }
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern bool DeleteFile(string path);
+
     /// <summary>Supprime l'ancienne version laissée par une mise à jour.</summary>
     private static void CleanOldVersion()
     {
@@ -140,13 +145,7 @@ internal sealed class TrayApp : ApplicationContext
     {
         try
         {
-            _env ??= await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"),
-                new CoreWebView2EnvironmentOptions
-                {
-                    // Les fenêtres tournent cachées : on évite que le navigateur les mette en veille.
-                    AdditionalBrowserArguments =
-                        "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
-                });
+            _env ??= await CoreWebView2Environment.CreateAsync(null, Path.Combine(Config.Folder, "WebView2"), EnvOptions());
         }
         catch (Exception ex)
         {
@@ -168,10 +167,8 @@ internal sealed class TrayApp : ApplicationContext
         BuildIcons();
         UpdateJumpList();
 
-        foreach (var w in _watchers)
-        {
-            try { await w.InitAsync(_env); } catch { }
-        }
+        Exception? failure = await InitWatchersAsync(_watchers);
+        if (failure != null) WebViewCheck.Explain(failure);
 
         if (_firstBuild && _watchers.Count > 0 && !Environment.GetCommandLineArgs().Contains("--tray"))
             _watchers[0].Window.ShowAndActivate();
@@ -184,6 +181,24 @@ internal sealed class TrayApp : ApplicationContext
         first.Tick += (_, _) => { first.Stop(); first.Dispose(); foreach (var w in _watchers) w.Poll(); };
         first.Start();
         RefreshIcons();
+    }
+
+    private static CoreWebView2EnvironmentOptions EnvOptions() => new()
+    {
+        // Les fenêtres tournent cachées : on évite que le navigateur les mette en veille.
+        AdditionalBrowserArguments =
+            "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
+    };
+
+    /// <summary>Prépare les fenêtres Gmail. Renvoie le premier échec, ou null.</summary>
+    private async Task<Exception?> InitWatchersAsync(List<AccountWatcher> watchers)
+    {
+        Exception? failure = null;
+        foreach (var w in watchers)
+        {
+            try { await w.InitAsync(_env!); } catch (Exception ex) { failure ??= ex; }
+        }
+        return failure;
     }
 
     private void BuildIcons()

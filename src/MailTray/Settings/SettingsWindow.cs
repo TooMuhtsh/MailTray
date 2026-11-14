@@ -58,8 +58,8 @@ internal sealed class SettingsWindow : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Impossible d'ouvrir les paramètres.\n\n" + ex.Message, Text);
             Close();
+            WebViewCheck.Explain(ex);
             return;
         }
         var core = _web.CoreWebView2;
